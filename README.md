@@ -13,3 +13,8 @@ python app.py
 
 Then open `http://127.0.0.1:5000`.
 
+## Vercel
+
+Connect the GitHub repo to Vercel and it will deploy on every push.
+The build step copies the whole `static/` tree into `public/static`
+so Vercel can serve the assets automatically.
