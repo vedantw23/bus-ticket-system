@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import traceback
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
@@ -499,41 +500,55 @@ def booking_worker(bus_id: str, passenger_name: str, seat_number: int, result: d
     Each request creates a worker thread. The shared lock prevents two threads
     from booking the same seat at the same time.
     """
-    seat_lock.acquire()
     try:
-        bus = BUS_STORE.get(bus_id)
+        with seat_lock:
+            bus = BUS_STORE.get(bus_id)
 
-        if bus is None:
-            result["success"] = False
-            result["message"] = "Selected bus does not exist."
-            return
+            if bus is None:
+                result["success"] = False
+                result["message"] = "Selected bus does not exist."
+                return
 
-        if seat_number < 1 or seat_number > bus["total_seats"]:
-            result["success"] = False
-            result["message"] = "Invalid seat number."
-            return
+            if seat_number < 1 or seat_number > bus["total_seats"]:
+                result["success"] = False
+                result["message"] = "Invalid seat number."
+                return
 
-        if bus["seat_status"][seat_number - 1] == 1:
-            print(f"Seat {seat_number} already booked")
-            result["success"] = False
-            result["message"] = f"Seat {seat_number} is already booked."
-            return
+            if bus["seat_status"][seat_number - 1] == 1:
+                print(f"Seat {seat_number} already booked")
+                result["success"] = False
+                result["message"] = f"Seat {seat_number} is already booked."
+                return
 
-        bus["seat_status"][seat_number - 1] = 1
-        bus["bookings"].append(
-            {
-                "name": passenger_name,
-                "seat_number": seat_number,
-                "booked_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            }
-        )
-        write_state_to_disk(BUS_STORE)
+            bus["seat_status"][seat_number - 1] = 1
+            bus["bookings"].append(
+                {
+                    "name": passenger_name,
+                    "seat_number": seat_number,
+                    "booked_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                }
+            )
 
-        print(f"Seat {seat_number} booked by {passenger_name}")
-        result["success"] = True
-        result["message"] = f"Seat {seat_number} booked successfully for {passenger_name}."
-    finally:
-        seat_lock.release()
+            try:
+                write_state_to_disk(BUS_STORE)
+            except OSError as exc:
+                # Keep the booking visible even if persistence is temporarily unavailable.
+                print(f"Warning: booking saved in memory but could not be written to disk: {exc}")
+                result["success"] = True
+                result["message"] = (
+                    f"Seat {seat_number} booked successfully for {passenger_name}, "
+                    f"but the booking could not be written to disk: {exc}"
+                )
+                return
+
+            print(f"Seat {seat_number} booked by {passenger_name}")
+            result["success"] = True
+            result["message"] = f"Seat {seat_number} booked successfully for {passenger_name}."
+    except Exception as exc:  # pragma: no cover - defensive safety for thread failures
+        print("Booking worker failed with an unexpected error:")
+        print(traceback.format_exc())
+        result["success"] = False
+        result["message"] = f"Unexpected booking error: {exc}"
 
 
 @app.route("/")
@@ -570,7 +585,10 @@ def book_seat():
         flash("Seat number must be numeric.", "error")
         return redirect(url_for("home", bus_id=bus_id or None))
 
-    booking_result: dict[str, Any] = {}
+    booking_result: dict[str, Any] = {
+        "success": False,
+        "message": "Unable to process the booking.",
+    }
 
     # Thread-per-booking request for OS concurrency demonstration.
     booking_thread = Thread(
