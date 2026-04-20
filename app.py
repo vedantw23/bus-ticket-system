@@ -8,6 +8,7 @@ from functools import wraps
 from pathlib import Path
 from threading import Lock, Thread
 from typing import Any
+from tempfile import gettempdir
 
 from flask import Flask, flash, redirect, render_template, request, session, url_for
 
@@ -18,7 +19,7 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_FILE = BASE_DIR / "data" / "bookings.json"
+PRIMARY_DATA_FILE = BASE_DIR / "data" / "bookings.json"
 LEGACY_DATA_FILE = BASE_DIR / "bookings.json"
 ADMIN_USERNAME = os.getenv("BUSMS_ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("BUSMS_ADMIN_PASSWORD", "123")
@@ -137,6 +138,46 @@ OFFICIAL_OPERATOR_CATALOG = [
 OFFICIAL_OPERATOR_LOOKUP = {
     operator["id"]: operator for operator in OFFICIAL_OPERATOR_CATALOG
 }
+
+
+def runtime_data_file() -> Path:
+    """Pick a writable JSON path for bookings.
+
+    Deployed environments may mount the application code as read-only, so we
+    fall back to a temp directory when the packaged data file cannot be used.
+    """
+    def is_writable_json_path(candidate: Path) -> bool:
+        try:
+            candidate.parent.mkdir(parents=True, exist_ok=True)
+            with candidate.open("a", encoding="utf-8"):
+                pass
+            return True
+        except OSError:
+            return False
+
+    configured_path = os.getenv("BUSMS_DATA_FILE")
+    if configured_path:
+        configured = Path(configured_path)
+        if is_writable_json_path(configured):
+            return configured
+
+    if is_writable_json_path(PRIMARY_DATA_FILE):
+        return PRIMARY_DATA_FILE
+
+    fallback = Path(gettempdir()) / "bus-ticket-system" / "bookings.json"
+    fallback.parent.mkdir(parents=True, exist_ok=True)
+    return fallback
+
+
+ACTIVE_DATA_FILE = runtime_data_file()
+
+
+def data_file_label() -> str:
+    """Return a readable label for the currently active data file."""
+    try:
+        return str(ACTIVE_DATA_FILE.relative_to(BASE_DIR))
+    except ValueError:
+        return str(ACTIVE_DATA_FILE)
 
 LEGACY_NAME_ALIASES = {
     "campus express": "bus-1",
@@ -416,10 +457,20 @@ def normalize_loaded_state(raw_data: dict[str, Any]) -> dict[str, dict[str, Any]
 
 def load_bus_store() -> dict[str, dict[str, Any]]:
     """Load buses from JSON if available, otherwise create default data."""
-    if DATA_FILE.exists():
+    if ACTIVE_DATA_FILE.exists():
         try:
-            with DATA_FILE.open("r", encoding="utf-8") as data_file:
+            with ACTIVE_DATA_FILE.open("r", encoding="utf-8") as data_file:
                 return normalize_loaded_state(json.load(data_file))
+        except (json.JSONDecodeError, OSError, TypeError, ValueError):
+            pass
+
+    if PRIMARY_DATA_FILE.exists():
+        try:
+            with PRIMARY_DATA_FILE.open("r", encoding="utf-8") as data_file:
+                primary_state = normalize_loaded_state(json.load(data_file))
+                if ACTIVE_DATA_FILE != PRIMARY_DATA_FILE:
+                    write_state_to_disk(primary_state)
+                return primary_state
         except (json.JSONDecodeError, OSError, TypeError, ValueError):
             pass
 
@@ -444,8 +495,8 @@ def serializable_state(bus_store: dict[str, dict[str, Any]]) -> dict[str, Any]:
 
 def write_state_to_disk(bus_store: dict[str, dict[str, Any]]) -> None:
     """Persist bookings to JSON for simple academic demonstration."""
-    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with DATA_FILE.open("w", encoding="utf-8") as data_file:
+    ACTIVE_DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with ACTIVE_DATA_FILE.open("w", encoding="utf-8") as data_file:
         json.dump(serializable_state(bus_store), data_file, indent=2)
 
 
@@ -564,7 +615,7 @@ def home():
         current_bus=current_bus,
         booked_count=booked_count,
         available_count=available_count,
-        data_file_path=str(DATA_FILE.relative_to(BASE_DIR)),
+        data_file_path=data_file_label(),
         official_operators=OFFICIAL_OPERATOR_CATALOG,
     )
 
@@ -642,7 +693,7 @@ def admin_panel():
         total_buses=len(buses),
         total_bookings=total_bookings,
         total_booked_seats=total_booked_seats,
-        data_file_path=str(DATA_FILE.relative_to(BASE_DIR)),
+        data_file_path=data_file_label(),
     )
 
 

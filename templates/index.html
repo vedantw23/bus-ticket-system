@@ -88,6 +88,43 @@
         </article>
       </section>
 
+      <section class="panel route-finder-panel">
+        <div class="section-head section-head-stack">
+          <div>
+            <span class="eyebrow">Quick Finder</span>
+            <h2>Select State and Route</h2>
+          </div>
+          <p class="section-note">
+            Choose the state and service route first, then jump straight to the bus that matches your trip.
+          </p>
+        </div>
+
+        <div class="route-finder-grid">
+          <label class="input-group">
+            <span>State</span>
+            <select id="state-filter" aria-label="Select state">
+              <option value="">All states</option>
+            </select>
+          </label>
+
+          <label class="input-group">
+            <span>Route</span>
+            <select id="route-filter" aria-label="Select route">
+              <option value="">All routes</option>
+            </select>
+          </label>
+
+          <div class="route-finder-action">
+            <button class="btn btn-primary btn-block" type="button" id="apply-bus-filters">
+              Find Bus
+            </button>
+            <p class="status-message" id="bus-filter-status">
+              Start by selecting a state and route.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section class="operator-showcase">
         <div class="section-head section-head-stack">
           <div>
@@ -156,7 +193,12 @@
             <span>Select Bus</span>
             <select id="bus-select" aria-label="Select bus">
               {% for bus in buses %}
-                <option value="{{ bus.id }}" {% if bus.id == current_bus.id %}selected{% endif %}>
+                <option
+                  value="{{ bus.id }}"
+                  data-state="{{ bus.state_name }}"
+                  data-route="{{ bus.service_scope }}"
+                  {% if bus.id == current_bus.id %}selected{% endif %}
+                >
                   {{ bus.state_name }} - {{ bus.name }}
                 </option>
               {% endfor %}

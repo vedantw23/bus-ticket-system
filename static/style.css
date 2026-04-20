@@ -358,6 +358,23 @@ select {
   transform: translateY(-1px);
 }
 
+.route-finder-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.route-finder-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(220px, 0.8fr);
+  gap: 16px;
+  align-items: end;
+}
+
+.route-finder-action {
+  display: grid;
+  gap: 12px;
+}
+
 .flash-list-tight {
   margin-bottom: 16px;
 }
@@ -587,6 +604,7 @@ code {
   .booking-layout,
   .admin-layout,
   .stats-grid,
+  .route-finder-grid,
   .operator-grid,
   .concept-grid,
   .admin-info-grid {
@@ -627,5 +645,9 @@ code {
   .seat {
     height: 40px;
     font-size: 0.8rem;
+  }
+
+  .route-finder-action {
+    gap: 10px;
   }
 }
