@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bus Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-page="home">
+    <header class="topbar">
+      <nav class="navbar shell">
+        <a class="brand" href="index.html">BusMS</a>
+        <div class="nav-links">
+          <a class="active" href="index.html">Home</a>
+          <a href="index.html#booking">Book Ticket</a>
+          <a href="login.html">Admin Login</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="shell page-stack">
+      <section class="hero-card">
+        <div class="hero-copy">
+          <span class="eyebrow">Operating Systems Project</span>
+          <h1>Bus Reservation System</h1>
+          <p>
+            Frontend focused on seat booking and live seat state. The backend
+            can later plug in thread handling and mutex-based concurrency
+            control.
+          </p>
+          <a class="btn btn-primary" href="#booking">Start Booking</a>
+        </div>
+        <div class="hero-side">
+          <div class="mini-card">
+            <span class="mini-label">Current Bus</span>
+            <strong id="hero-bus-name">Campus Express</strong>
+          </div>
+          <div class="mini-card">
+            <span class="mini-label">Available Seats</span>
+            <strong id="hero-available-count">0</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <span class="mini-label">Active Bus</span>
+          <strong id="active-bus-label">Campus Express</strong>
+          <p id="active-bus-capacity">0 seats</p>
+        </article>
+        <article class="stat-card">
+          <span class="mini-label">Booked Seats</span>
+          <strong id="booked-count">0</strong>
+          <p>Already reserved</p>
+        </article>
+        <article class="stat-card">
+          <span class="mini-label">Selected Seat</span>
+          <strong id="selected-seat-display">None</strong>
+          <p>Choose one seat to continue</p>
+        </article>
+      </section>
+
+      <section class="panel" id="booking">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Booking Page</span>
+            <h2>Book a Seat</h2>
+          </div>
+          <label class="input-group compact">
+            <span>Select Bus</span>
+            <select id="booking-bus-select"></select>
+          </label>
+        </div>
+
+        <div class="booking-layout">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h3>Seat Layout</h3>
+                <p>Click one available seat to reserve it.</p>
+              </div>
+              <div class="legend">
+                <span><i class="seat-dot available"></i>Available</span>
+                <span><i class="seat-dot booked"></i>Booked</span>
+                <span><i class="seat-dot selected"></i>Selected</span>
+              </div>
+            </div>
+
+            <div class="seat-board">
+              <div class="driver-label">Driver</div>
+              <div class="seat-grid" id="seat-grid"></div>
+            </div>
+          </div>
+
+          <div class="card form-card">
+            <h3>Booking Form</h3>
+            <form id="booking-form" class="stack-form">
+              <label class="input-group">
+                <span>Name</span>
+                <input
+                  type="text"
+                  id="passenger-name"
+                  placeholder="Enter student name"
+                  required
+                />
+              </label>
+              <label class="input-group">
+                <span>Seat Number</span>
+                <input
+                  type="text"
+                  id="seat-number"
+                  placeholder="Select a seat"
+                  readonly
+                  required
+                />
+              </label>
+              <button class="btn btn-primary btn-block" type="submit">
+                Book Seat
+              </button>
+              <p class="status-message" id="booking-message"></p>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

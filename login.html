@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login | Bus Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-page="login">
+    <header class="topbar">
+      <nav class="navbar shell">
+        <a class="brand" href="index.html">BusMS</a>
+        <div class="nav-links">
+          <a href="index.html">Home</a>
+          <a href="index.html#booking">Book Ticket</a>
+          <a class="active" href="login.html">Admin Login</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="shell login-shell">
+      <section class="login-card">
+        <span class="eyebrow">Admin Access</span>
+        <h1>Login</h1>
+        <p>
+          This page is frontend only. Backend authentication can validate the
+          username and password later.
+        </p>
+
+        <form id="login-form" class="stack-form">
+          <label class="input-group">
+            <span>Username</span>
+            <input type="text" id="admin-username" placeholder="Enter username" required />
+          </label>
+          <label class="input-group">
+            <span>Password</span>
+            <input
+              type="password"
+              id="admin-password"
+              placeholder="Enter password"
+              required
+            />
+          </label>
+          <button class="btn btn-primary btn-block" type="submit">Login</button>
+          <p class="status-message" id="login-message"></p>
+        </form>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

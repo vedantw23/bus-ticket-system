@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bus Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body data-page="home">
+    <header class="topbar">
+      <nav class="navbar shell">
+        <a class="brand" href="{{ url_for('home') }}">BusMS</a>
+        <div class="nav-links">
+          <a class="active" href="{{ url_for('home') }}">Home</a>
+          <a href="#booking">Book Ticket</a>
+          <a href="{{ url_for('login') }}">Admin Login</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="shell page-stack">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <section class="flash-list">
+            {% for category, message in messages %}
+              <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          </section>
+        {% endif %}
+      {% endwith %}
+
+      <section class="hero-card">
+        <div class="hero-copy">
+          <span class="eyebrow">Operating Systems Project</span>
+          <h1>Indian Bus Reservation Console</h1>
+          <p>
+            Real bus operator names are now seeded from current official Indian
+            transport corporation names, while booking still stays focused on
+            OS concepts like threads, critical sections, and mutex locking.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#booking">Start Booking</a>
+            <a class="btn btn-secondary" href="{{ url_for('admin_panel') if session.get('admin_logged_in') else url_for('login') }}">
+              {% if session.get('admin_logged_in') %}Open Admin{% else %}Admin Login{% endif %}
+            </a>
+          </div>
+        </div>
+        <div class="hero-side">
+          <div class="mini-card">
+            <span class="mini-label">Current Bus</span>
+            <strong>{{ current_bus.name }}</strong>
+            <p>{{ current_bus.state_name }} • {{ current_bus.service_scope }}</p>
+          </div>
+          <div class="mini-card">
+            <span class="mini-label">Available Seats</span>
+            <strong>{{ available_count }}</strong>
+            <p>Stored in {{ data_file_path }}</p>
+          </div>
+          <div class="mini-card mini-card-accent">
+            <span class="mini-label">Synchronization</span>
+            <strong>Global Mutex Lock</strong>
+            <p>One booking thread enters the critical section at a time.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <span class="mini-label">Active Bus</span>
+          <strong>{{ current_bus.name }}</strong>
+          <p>{{ current_bus.state_name }} • {{ current_bus.total_seats }} seats</p>
+        </article>
+        <article class="stat-card">
+          <span class="mini-label">Booked Seats</span>
+          <strong>{{ booked_count }}</strong>
+          <p>Already reserved</p>
+        </article>
+        <article class="stat-card">
+          <span class="mini-label">Selected Seat</span>
+          <strong id="selected-seat-display">None</strong>
+          <p>Choose one seat to continue</p>
+        </article>
+      </section>
+
+      <section class="operator-showcase">
+        <div class="section-head section-head-stack">
+          <div>
+            <span class="eyebrow">Verified Operators</span>
+            <h2>State-Wise Indian Bus Operators</h2>
+          </div>
+          <p class="section-note">
+            These are grouped by state or union territory and include major
+            state operators plus selected local or city bus services.
+          </p>
+        </div>
+
+        <div class="state-groups">
+          {% for state_group in official_operators | groupby('state_name') %}
+            <section class="state-group-card">
+              <div class="state-group-head">
+                <span class="operator-state">{{ state_group.grouper }}</span>
+              </div>
+              <div class="operator-grid">
+                {% for operator in state_group.list %}
+                  <article class="operator-card">
+                    <span class="operator-scope">{{ operator.service_scope }}</span>
+                    <h3>{{ operator.name }}</h3>
+                    <p>{{ operator.source_label }}</p>
+                    {% if operator.source_url %}
+                      <a href="{{ operator.source_url }}" target="_blank" rel="noreferrer">Official source</a>
+                    {% endif %}
+                  </article>
+                {% endfor %}
+              </div>
+            </section>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="concept-grid">
+        <article class="concept-card">
+          <span class="concept-number">01</span>
+          <h3>Threads</h3>
+          <p>Each booking request creates a separate Python thread.</p>
+        </article>
+        <article class="concept-card">
+          <span class="concept-number">02</span>
+          <h3>Critical Section</h3>
+          <p>The shared seat array is the resource all threads compete for.</p>
+        </article>
+        <article class="concept-card">
+          <span class="concept-number">03</span>
+          <h3>Mutex Lock</h3>
+          <p>The lock ensures only one booking thread updates seat data at a time.</p>
+        </article>
+        <article class="concept-card">
+          <span class="concept-number">04</span>
+          <h3>Race Prevention</h3>
+          <p>Without synchronization, two users could wrongly book the same seat.</p>
+        </article>
+      </section>
+
+      <section class="panel" id="booking">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Booking Page</span>
+            <h2>Book a Seat</h2>
+          </div>
+          <label class="input-group compact">
+            <span>Select Bus</span>
+            <select id="bus-select" aria-label="Select bus">
+              {% for bus in buses %}
+                <option value="{{ bus.id }}" {% if bus.id == current_bus.id %}selected{% endif %}>
+                  {{ bus.state_name }} - {{ bus.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+
+        <div class="booking-layout">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h3>Seat Layout</h3>
+                <p>Click one available seat to fill the booking form for {{ current_bus.name }}.</p>
+              </div>
+              <div class="legend">
+                <span><i class="seat-dot available"></i>Available</span>
+                <span><i class="seat-dot booked"></i>Booked</span>
+                <span><i class="seat-dot selected"></i>Selected</span>
+              </div>
+            </div>
+
+            <div class="seat-board">
+              <div class="driver-label">Driver</div>
+              <div class="seat-grid" id="seat-grid">
+                {% for seat_state in current_bus.seat_status %}
+                  {% set seat_number = loop.index %}
+                  <button
+                    class="seat {% if seat_state == 1 %}booked{% else %}available{% endif %}"
+                    type="button"
+                    data-seat-number="{{ seat_number }}"
+                    {% if seat_state == 1 %}disabled{% endif %}
+                  >
+                    {{ seat_number }}
+                  </button>
+                  {% if seat_number % 4 == 2 %}
+                    <span class="seat" data-position="aisle" aria-hidden="true"></span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div class="card form-card">
+            <h3>Booking Form</h3>
+            <p class="form-note">
+              Backend data is stored in memory first and persisted to
+              <strong>{{ data_file_path }}</strong>.
+            </p>
+            <form action="{{ url_for('book_seat') }}" method="post" class="stack-form">
+              <input type="hidden" name="bus_id" value="{{ current_bus.id }}" />
+              <label class="input-group">
+                <span>Name</span>
+                <input
+                  type="text"
+                  name="name"
+                  id="passenger-name"
+                  placeholder="Enter student name"
+                  required
+                />
+              </label>
+              <label class="input-group">
+                <span>Seat Number</span>
+                <input
+                  type="text"
+                  name="seat_number"
+                  id="seat-number"
+                  placeholder="Select a seat"
+                  readonly
+                  required
+                />
+              </label>
+              <button class="btn btn-primary btn-block" type="submit">
+                Book Seat
+              </button>
+              <p class="status-message">
+                Seat data is protected on the backend using a global mutex lock.
+              </p>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>

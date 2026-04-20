@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel | Bus Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-page="admin">
+    <header class="topbar">
+      <nav class="navbar shell">
+        <a class="brand" href="index.html">BusMS</a>
+        <div class="nav-links">
+          <a href="index.html">Home</a>
+          <a href="index.html#booking">Book Ticket</a>
+          <a href="login.html">Admin Login</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="shell page-stack">
+      <section class="hero-card hero-card-compact">
+        <div class="hero-copy">
+          <span class="eyebrow">Admin Panel</span>
+          <h1>Manage Buses and Bookings</h1>
+          <p>
+            Use this page to add buses, reset all seat allocations, and review
+            booking entries generated from the booking page.
+          </p>
+        </div>
+      </section>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <span class="mini-label">Total Buses</span>
+          <strong id="admin-total-buses">0</strong>
+          <p>Registered in local storage</p>
+        </article>
+        <article class="stat-card">
+          <span class="mini-label">Total Bookings</span>
+          <strong id="admin-total-bookings">0</strong>
+          <p>Across all buses</p>
+        </article>
+        <article class="stat-card">
+          <span class="mini-label">Booked Seats</span>
+          <strong id="admin-total-seats-booked">0</strong>
+          <p>Reserved right now</p>
+        </article>
+      </section>
+
+      <section class="admin-layout">
+        <div class="card form-card">
+          <div class="section-head tight">
+            <div>
+              <span class="eyebrow">Bus Setup</span>
+              <h2>Add Bus</h2>
+            </div>
+          </div>
+          <form id="add-bus-form" class="stack-form">
+            <label class="input-group">
+              <span>Bus Name</span>
+              <input
+                type="text"
+                id="bus-name"
+                placeholder="Campus Shuttle"
+                required
+              />
+            </label>
+            <label class="input-group">
+              <span>Total Seats</span>
+              <input
+                type="number"
+                id="bus-seat-count"
+                min="8"
+                max="60"
+                placeholder="32"
+                required
+              />
+            </label>
+            <button class="btn btn-primary btn-block" type="submit">
+              Add Bus
+            </button>
+          </form>
+          <button class="btn btn-secondary btn-block" id="reset-seats-btn" type="button">
+            Reset All Seats
+          </button>
+          <p class="status-message" id="admin-message"></p>
+        </div>
+
+        <div class="stack-panel">
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <h3>Registered Buses</h3>
+                <p>Simple overview of buses currently available.</p>
+              </div>
+            </div>
+            <div class="simple-list" id="bus-list"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <h3>View All Bookings</h3>
+                <p>Booking log from the user page.</p>
+              </div>
+            </div>
+            <div class="simple-list" id="booking-list"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

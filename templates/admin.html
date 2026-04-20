@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel | Bus Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body data-page="admin">
+    <header class="topbar">
+      <nav class="navbar shell">
+        <a class="brand" href="{{ url_for('home') }}">BusMS</a>
+        <div class="nav-links">
+          <a href="{{ url_for('home') }}">Home</a>
+          <a href="{{ url_for('home') }}#booking">Book Ticket</a>
+          <a class="active" href="{{ url_for('admin_panel') }}">Admin Panel</a>
+          <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="shell page-stack">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <section class="flash-list">
+            {% for category, message in messages %}
+              <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          </section>
+        {% endif %}
+      {% endwith %}
+
+      <section class="hero-card hero-card-compact">
+        <div class="hero-copy">
+          <span class="eyebrow">Admin Panel</span>
+          <h1>Manage Buses and Bookings</h1>
+          <p>
+            This page visualizes shared seat arrays, booking logs, and admin
+            actions such as reset and add bus. Backend persistence is currently
+            stored at <strong>{{ data_file_path }}</strong>.
+          </p>
+        </div>
+      </section>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <span class="mini-label">Total Buses</span>
+          <strong>{{ total_buses }}</strong>
+          <p>Available in memory</p>
+        </article>
+        <article class="stat-card">
+          <span class="mini-label">Total Bookings</span>
+          <strong>{{ total_bookings }}</strong>
+          <p>Saved to JSON file</p>
+        </article>
+        <article class="stat-card">
+          <span class="mini-label">Booked Seats</span>
+          <strong>{{ total_booked_seats }}</strong>
+          <p>Currently reserved</p>
+        </article>
+      </section>
+
+      <section class="operator-showcase">
+        <div class="section-head section-head-stack">
+          <div>
+            <span class="eyebrow">Backend Notes</span>
+            <h2>How the Backend Stores and Protects Data</h2>
+          </div>
+        </div>
+
+        <div class="operator-grid admin-info-grid">
+          <article class="operator-card">
+            <span class="operator-state">Memory</span>
+            <h3>Primary Runtime State</h3>
+            <p>Seat arrays and bookings live in the global <code>BUS_STORE</code> dictionary.</p>
+          </article>
+          <article class="operator-card">
+            <span class="operator-state">Persistence</span>
+            <h3>JSON Backup</h3>
+            <p>Every booking and reset is also written to <code>{{ data_file_path }}</code>.</p>
+          </article>
+          <article class="operator-card">
+            <span class="operator-state">Concurrency</span>
+            <h3>Mutex Protected</h3>
+            <p>A single global <code>threading.Lock()</code> guards the booking critical section.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="admin-layout">
+        <div class="card form-card">
+          <div class="section-head tight">
+            <div>
+              <span class="eyebrow">Bus Setup</span>
+              <h2>Add Bus</h2>
+            </div>
+          </div>
+
+          <form action="{{ url_for('add_bus') }}" method="post" class="stack-form">
+            <label class="input-group">
+              <span>Bus Name</span>
+              <input type="text" name="bus_name" placeholder="Campus Shuttle" required />
+            </label>
+            <label class="input-group">
+              <span>Total Seats</span>
+              <input
+                type="number"
+                name="total_seats"
+                min="8"
+                max="60"
+                placeholder="32"
+                required
+              />
+            </label>
+            <button class="btn btn-primary btn-block" type="submit">Add Bus</button>
+          </form>
+
+          <form action="{{ url_for('reset_seats') }}" method="post" class="stack-form">
+            <button class="btn btn-secondary btn-block" type="submit">Reset All Seats</button>
+          </form>
+        </div>
+
+        <div class="stack-panel">
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <h3>Bus Status</h3>
+                <p>Each bus stores seat state in memory as a 0/1 array.</p>
+              </div>
+            </div>
+
+            <div class="simple-list">
+              {% for bus in buses %}
+                <article class="list-item">
+                  <strong>{{ bus.name }}</strong>
+                  <p>State: {{ bus.state_name }}</p>
+                  <p>Type: {{ bus.service_scope }}</p>
+                  <p>Total Seats: {{ bus.total_seats }}</p>
+                  <p>Booked Seats: {{ bus.seat_status | sum }}</p>
+                  <p>Source: {{ bus.source_label }}</p>
+                  <p class="state-array">Seat Array: {{ bus.seat_status }}</p>
+                </article>
+              {% endfor %}
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
+              <div>
+                <h3>View All Bookings</h3>
+                <p>Booking records for each bus.</p>
+              </div>
+            </div>
+
+            <div class="simple-list">
+              {% for bus in buses %}
+                <article class="list-item">
+                  <strong>{{ bus.name }}</strong>
+                  {% if bus.bookings %}
+                    {% for booking in bus.bookings %}
+                      <p>
+                        {{ booking.name }} booked seat {{ booking.seat_number }}
+                        at {{ booking.booked_at }}
+                      </p>
+                    {% endfor %}
+                  {% else %}
+                    <p>No bookings for this bus yet.</p>
+                  {% endif %}
+                </article>
+              {% endfor %}
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
